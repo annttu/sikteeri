@@ -9,7 +9,7 @@ from django.conf import settings
 from django.db import transaction
 from django.conf import settings
 
-from management.commands.paper_reminders import generate_reminders
+from membership.management.commands.paper_reminders import generate_reminders
 from membership.models import *
 from membership.utils import *
 
