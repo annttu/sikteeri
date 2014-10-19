@@ -46,6 +46,7 @@ from management.commands.makebills import MembershipNotApproved
 from management.commands.csvbills import process_op_csv, process_procountor_csv
 from management.commands.csvbills import PaymentFromFutureException, RequiredFieldNotFoundException
 
+
 __test__ = {
     "tupletuple_to_dict": tupletuple_to_dict,
 }
@@ -689,6 +690,7 @@ class CSVReadingTest(TestCase):
             except RequiredFieldNotFoundException:
                 self.fail("Valid csv should not raise header error.")
 
+
 class ProcountorCSVNoMembersTest(TestCase):
     fixtures = ['membership_fees.json', 'test_user.json']
 
@@ -722,7 +724,6 @@ class ProcountorCSVReadingTest(TestCase):
 
     def test_import_data(self):
         no_cycle_q = Q(billingcycle=None)
-
         with open(test_data_file("procountor-csv-test.txt"), 'r') as f:
             process_procountor_csv(f)
         payment_count = Payment.objects.filter(~no_cycle_q).count()
@@ -735,7 +736,6 @@ class ProcountorCSVReadingTest(TestCase):
 
     def test_duplicate_payment(self):
         no_cycle_q = Q(billingcycle=None)
-
         with open(test_data_file("procountor-csv-duplicate.txt"), 'r') as f:
             process_procountor_csv(f)
         payment_match_count = Payment.objects.filter(~no_cycle_q).count()
