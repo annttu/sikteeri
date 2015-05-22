@@ -51,17 +51,17 @@ address_format = (
 )
 
 
-class PostiChangedAddressImporter(object):
-    def __init__(self, f):
-        """
-        :param f: File like object containing CSV data.
-        :return:
-        """
-        self.f = f
-        self.parse_data()
+class PostiChangedAddressParser(object):
 
-    def parse_data(self):
-        for line in self.f.readlines():
+    @staticmethod
+    def parse_data(filehandle):
+        """
+        Parse fixed width formatted data received from Posti.
+        :param filehandle: file like object
+        :return: list of parsed data.
+        """
+        out = []
+        for line in filehandle.readlines():
             line = line.decode("iso-8859-1")
             address_data = split_string(line, post_format)
             new_address = split_string(address_data['new_address'],
@@ -80,10 +80,14 @@ class PostiChangedAddressImporter(object):
                 n = address_data['full_name']
                 address_data['full_name'] = n[:50]
                 address_data['old_name'] = n[50:]
-            for k,v in address_data.items():
-                print('%s: "%s"' % (k, v))
+            out.append(address_data)
+        return out
 
 
 if __name__ == '__main__':
     f = open("/tmp/postidata.csv", 'rb')
-    PostiChangedAddressImporter(f)
+    p = PostiChangedAddressParser()
+    for address_data in p.parse_data(f):
+        print("")
+        for k, v in sorted(address_data.items(), key=lambda x: x[0]):
+            print('%s: "%s"' % (k, v))
