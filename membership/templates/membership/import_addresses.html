@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+{% if import_messages %}
+<p>
+  {% for msg in import_messages %}
+  {% if msg.1 %}<a href="{% url contact_edit msg.1.id %}">{{ msg.0 }}</a>
+  {% else %}{{ msg.0 }}{% endif %}
+  <br />
+  {% endfor %}
+</p>
+{% endif %}
+<p>
+<form method="POST" enctype="multipart/form-data">{% csrf_token %}
+{{ form.as_p }}
+<input type="submit" value="{% trans "Import changed addresses" %}" />
+</form>
+</p>
+
+{% endblock %}

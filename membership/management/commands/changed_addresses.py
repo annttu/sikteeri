@@ -6,6 +6,7 @@ import struct
 import StringIO
 from membership.models import Contact
 from membership.utils import log_change
+from django.utils.translation import ugettext_lazy as _
 
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
@@ -60,7 +61,7 @@ def fields_to_dict(keys, values):
                               ).decode('ISO-8859-1').encode('utf-8')
     return retval
 
-def update_contact(record):
+def update_contact(record, log_user=None):
     if 'operating_name' in record:
         # organization member
         contacts = Contact.objects.filter(
@@ -75,8 +76,11 @@ def update_contact(record):
                             street_address__iexact=record['old_street_address'])
     contacts = contacts.all()
     if len(contacts) == 0:
-        logging.error('Cannot find contact for record %s' % record['name'])
-        return
+        msg = 'Cannot find contact for record %s on address %s %s %s' % (
+                    record['name'],record['old_street_address'],
+                    record['old_postal_code'],record['old_post_office'])
+        logging.error(msg)
+        return (msg, None)
     for contact in contacts:
         before = contact.__dict__.copy()
         contact.street_address = record['new_street_address']
@@ -85,15 +89,19 @@ def update_contact(record):
         print('save')
         contact.save()
         after = contact.__dict__.copy()
-        log_user = User.objects.get(id=1) # Get sikteeri user
+        if log_user == None:
+            log_user = User.objects.get(id=1) # Get sikteeri user
         log_change(contact, log_user, before, after)
         logging.info('Updated contact %s' % contact)
-    return True
-    
+    return (_('Contact %s updated' % contact), contact)
 
-def changed_addresses(filehandle):
+def changed_addresses(filehandle, user=None):
+    messages = []
     for record in Parser(filehandle):
-       update_contact(record) 
+       msg = update_contact(record, user)
+       if msg:
+           messages.append(msg)
+    return messages
 
 
 class Command(BaseCommand):

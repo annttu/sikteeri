@@ -57,6 +57,9 @@
    <li><a href="{% url "ignored_payment_list" %}">{% trans "Ignored payments" %}</a></li>
    <li><a href="{% url "payment_list" %}">{% trans "All payments" %}</a></li>
    <li><a href="{% url "print_reminders" %}">{% trans "Print reminders" %}</a></li>
+   {% if perms.membership.manage_members %}
+   <li><a href="{% url contact_import %}">{% trans "Import contacts" %}</a></li>
+   {% endif %}
    {% if perms.membership.can_import_payments %}
    <li><a href="{% url "import_payments" %}">{% trans "Import payments" %}</a></li>
    {% endif %}

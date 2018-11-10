@@ -34,6 +34,11 @@ from membership.management.commands.csvbills import process_op_csv, process_proc
 from membership.models import Contact, Membership, MEMBER_TYPES_DICT, Bill, BillingCycle, Payment, ApplicationPoll, \
     MembershipAlreadyStatus
 from services.views import check_alias_availability, validate_alias
+from management.commands.csvbills import process_csv as payment_csv_import
+from management.commands.paper_reminders import generate_reminders, get_data as get_paper_reminders
+from management.commands.changed_addresses import changed_addresses
+from decorators import trusted_host_required
+
 
 logger = logging.getLogger("membership.views")
 
@@ -63,7 +68,6 @@ class SortListView(ListView):
             return qs.order_by(ordering)
         else:
             return qs
-
 
 # Public access
 def new_application(request, template_name='membership/choose_membership_type.html'):
@@ -594,6 +598,37 @@ def import_payments(request, template_name='membership/import_payments.html'):
                    'form': form,
                    'import_messages': import_messages})
 
+
+@permission_required('membership.manage_members')
+def import_addresses(request, template_name='membership/import_addresses.html'):
+    import_messages = []
+    class ImportForm(Form):
+        txt = FileField(label=_('TXT File'),
+                        help_text=_('Choose file to upload'))
+    if request.method == 'POST':
+        form = ImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                in_memory_file = request.FILES['txt']
+                logger.info('Beginning Itella\'s Information Service import')
+                import_messages = changed_addresses(in_memory_file, request.user)
+                messages.success(request, unicode(_("Import succeeded!")))
+            except:
+                logger.error("%s" % traceback.format_exc())
+                logger.error("Changed addresses import failed.")
+                messages.error(request,
+                               unicode(_("Changed addresses import failed.")))
+        else:
+             messages.error(request,
+                               unicode(_("Changed addresses import failed.")))
+    else:
+        form = ImportForm()
+
+    return render_to_response(template_name,
+                              {'title': _("Import chanded addresses"),
+                               'form': form,
+                               'import_messages': import_messages},
+                               context_instance=RequestContext(request))
 
 @permission_required('membership.read_bills')
 def print_reminders(request, **kwargs):
